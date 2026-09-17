@@ -4,7 +4,11 @@ Bilingual full stack portfolio. Spanish/English, interactive Three.js WM monogra
 
 ## Development
 
-Run `npm ci`, then `npm run dev`. Check `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`. Public static output is `dist/client`. Deploy only that output via the Sites manifest. No backend, database or server functions are required.
+Run `npm ci`, then `npm run dev`. Check `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`. Public static output is `dist/client`. No backend, database or server functions are required.
+
+## Vercel deployment
+
+Import this repository with its root directory unchanged. The committed `vercel.json` selects the Other framework preset, runs `npm ci` and `npm run build`, and publishes `dist/client`. This project uses Vinext static export; it must not use the Next.js preset or publish the repository root or `dist` directory. Pushes to the connected production branch trigger a new deployment. Sites can also publish the same static output through its existing manifest.
 
 ## Content
 
