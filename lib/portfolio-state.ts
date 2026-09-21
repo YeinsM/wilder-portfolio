@@ -1,6 +1,7 @@
 export type Locale = 'es' | 'en';
 export function normalizeLocale(value: string | null): Locale {
-  return value === 'en' ? 'en' : 'es';
+  // Keep an explicit Spanish choice, but default missing/unsupported values to English.
+  return value === 'es' ? 'es' : 'en';
 }
 export function nextStep(step: number): number {
   return Math.min(4, step + 1);
