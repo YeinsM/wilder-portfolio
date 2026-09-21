@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { normalizeLocale, nextStep, contactHref } from './portfolio-state';
 describe('portfolio behavior', () => {
-  it('uses Spanish for missing or unsupported stored language', () => {
-    expect(normalizeLocale(null)).toBe('es');
-    expect(normalizeLocale('fr')).toBe('es');
+  it('uses English for missing or unsupported stored language', () => {
+    expect(normalizeLocale(null)).toBe('en');
+    expect(normalizeLocale('fr')).toBe('en');
     expect(normalizeLocale('en')).toBe('en');
+    expect(normalizeLocale('es')).toBe('es');
   });
   it('runs interface, service, data, response and stops', () => {
     let state = 0;
