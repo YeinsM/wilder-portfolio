@@ -32,3 +32,12 @@ test('skips identical captures and saves meaningful changes', async () => {
     assert.deepEqual(await readFile(file), picture(255));
   } finally { await rm(dir, { recursive: true }); }
 });
+test('replaces a legacy non-PNG baseline only after validating a new PNG', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'wm-thumbnails-'));
+  try {
+    const file = join(dir, 'preview.png');
+    await writeFile(file, Buffer.from([0xff, 0xd8, 0xff, 0xe0]));
+    assert.equal(await updateThumbnail(file, async () => picture(255)), true);
+    assert.deepEqual(await readFile(file), picture(255));
+  } finally { await rm(dir, { recursive: true }); }
+});

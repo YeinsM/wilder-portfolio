@@ -8,8 +8,13 @@ export async function updateThumbnail(file, capture) {
   const bytes = await capture();
   const next = PNG.sync.read(bytes);
   let previous;
-  try { previous = PNG.sync.read(await readFile(file)); }
+  let previousBytes;
+  try { previousBytes = await readFile(file); }
   catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (previousBytes) {
+    try { previous = PNG.sync.read(previousBytes); }
+    catch { /* A valid new PNG can replace an older capture in another format. */ }
+  }
   if (previous?.width === next.width && previous?.height === next.height) {
     const changed = pixelmatch(previous.data, next.data, null, next.width, next.height, { threshold: 0.15 });
     // Ignore minor rasterization differences and tiny transient elements.
