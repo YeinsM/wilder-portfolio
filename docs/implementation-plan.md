@@ -7,6 +7,8 @@ Completed source implementation: approved original bilingual Wilder Mancera port
 - [x] Complete content, case details, interactive stack, 3D layers, contact and bilingual copy.
 - [x] Responsive rules, keyboard controls, reduced motion and GPU cleanup.
 - [x] Typecheck, authored-source lint, tests, production export, independent source review and fixes.
-- [ ] Private Sites publication; use manifest project_id and exact committed source.
+- [x] Production publication through Vercel using the committed static-export configuration.
+- [x] Automatic project screenshot refresh through GitHub Actions.
+- [x] Continuous integration for typecheck, tests, lint, production build and thumbnail automation tests.
 
 No Xaurix agent structure copied, per latest user instruction.
