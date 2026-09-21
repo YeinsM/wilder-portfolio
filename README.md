@@ -12,7 +12,7 @@ Import this repository with its root directory unchanged. The committed `vercel.
 
 ## Content
 
-Edit `lib/content.ts` for bilingual copy and projects. Contact URLs are in `components/portfolio.tsx`; email intent encoding is in `lib/portfolio-state.ts`. Career dates and metrics in lib/experience.ts were supplied by Wilder. No years of experience or sole-authorship claims were invented. BM Cargo is explicitly a contribution to an existing project. Project visuals are labeled conceptual summaries, not screenshots of production systems.
+Edit `lib/content.ts` for bilingual copy and projects. Contact URLs are in `components/portfolio.tsx`; email intent encoding is in `lib/portfolio-state.ts`. Career dates and metrics in lib/experience.ts were supplied by Wilder. No years of experience or sole-authorship claims were invented. BM Cargo is explicitly a contribution to an existing project. Project cards use real screenshots of the public websites, stored in public/projects. These snapshots are updated manually when the websites change.
 
 ## Verification and limits
 
@@ -26,3 +26,9 @@ Edit `lib/content.ts` for bilingual copy and projects. Contact URLs are in `comp
 ## Sources
 
 Profile, contributions, stack and contacts were supplied and approved by Wilder Mancera. Public project links: https://deltaforex.org/, https://www.techbrains.com.do/, https://inscripciontorneo.bmcargo.com/. GitHub link: https://github.com/YeinsM/YeinsM. Original visual reference informed the initial discussion; this design uses its own composition and interaction concept.
+
+## Automatic project thumbnails
+
+The `Refresh website thumbnails` GitHub Actions workflow runs daily at 10:23 UTC (06:23 in Santo Domingo; GitHub schedules may be delayed), manually via **Actions → Refresh website thumbnails → Run workflow**, and when its capture code changes on main. It uses pinned Playwright dependencies in `scripts/thumbnails`, visits the three public websites at 1280×800, checks expected page content and visible images, and saves PNG snapshots. It retains the last image on HTTP/loading/validation failures and reports a failed run if any capture fails. Differences below 0.5% of pixels are ignored; animated or time-sensitive page content can still produce daily changes.
+
+Changed screenshots are committed to main with the existing project author and the GitHub Actions bot as committer. Vercel's connected Git integration deploys the new commit. No personal access token or external screenshot service is required. The schedule is approximate, not a guarantee of an update within 24 hours. Repository Actions must be enabled and permitted to write contents. Test preservation and comparison logic with `node --test scripts/thumbnails/update.test.mjs` after `npm ci --prefix scripts/thumbnails`.

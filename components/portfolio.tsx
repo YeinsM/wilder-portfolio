@@ -1,4 +1,5 @@
 'use client';
+import Image from 'next/image';
 import {
   lazy,
   Suspense,
@@ -53,79 +54,33 @@ function subscribeLocale(listener: () => void) {
 const serverLocale = (): Locale => 'es';
 
 function ProjectVisual({ id, locale }: { id: string; locale: Locale }) {
-  const en = locale === 'en';
+  const project = projects.find((item) => item.id === id)!;
   return (
-    <div className={`project-visual ${id}`} aria-hidden="true">
-      <div className="preview-top">
+    <a
+      className="project-visual website-preview"
+      href={project.url}
+      target="_blank"
+      rel="noreferrer"
+      aria-label={`${locale === 'es' ? 'Visitar sitio' : 'Visit website'}: ${project.name}`}
+    >
+      <div className="preview-top" aria-hidden="true">
         <span className="preview-dots">● ● ●</span>
-        <span>
-          {id === 'delta'
-            ? 'deltaforex.org'
-            : id === 'techbrains'
-              ? 'techbrains.com.do'
-              : 'inscripciontorneo.bmcargo.com'}
-        </span>
+        <span>{new URL(project.url).hostname.replace(/^www\./, '')}</span>
         <ArrowUpRight size={14} />
       </div>
-      {id === 'delta' ? (
-        <div className="delta-graphic">
-          <span className="preview-label">
-            {en ? 'TRADING COMMUNITY' : 'COMUNIDAD DE TRADING'}
-          </span>
-          <strong>
-            DELTA<span>FOREX</span>
-            <i>↗</i>
-          </strong>
-          <div className="data-flow">
-            <span>{en ? 'Accounts' : 'Cuentas'}</span>
-            <span>{en ? 'History' : 'Historial'}</span>
-            <span>{en ? 'Results' : 'Resultados'}</span>
-          </div>
-        </div>
-      ) : id === 'techbrains' ? (
-        <div className="tech-graphic">
-          <span className="preview-label">SOFTWARE & TECHNOLOGY</span>
-          <strong>
-            <Code2 />
-            TechBrains<span>.</span>
-          </strong>
-          <p>
-            {en
-              ? 'Ideas. Technology. Possibilities.'
-              : 'Ideas. Tecnología. Posibilidades.'}
-          </p>
-          <div className="tech-graphic-line">
-            <span>DESIGN</span>
-            <span>DEVELOP</span>
-            <span>DELIVER</span>
-          </div>
-        </div>
-      ) : (
-        <div className="cargo-graphic">
-          <span className="preview-label">
-            {en ? 'TOURNAMENT REGISTRATION' : 'INSCRIPCIONES AL TORNEO'}
-          </span>
-          <strong>
-            BM<span>CARGO</span>
-            <sup>↗</sup>
-          </strong>
-          <div className="cargo-roles">
-            <span>
-              {en ? 'Player' : 'Jugador'} <ArrowRight size={16} />
-            </span>
-            <span>
-              {en ? 'Sponsor' : 'Patrocinador'} <ArrowRight size={16} />
-            </span>
-          </div>
-        </div>
-      )}
-      <span className="preview-caption">
-        {en ? 'PROJECT OVERVIEW' : 'VISTA CONCEPTUAL DEL PROYECTO'}
-      </span>
-    </div>
+      <Image
+        unoptimized
+        className="website-thumbnail"
+        src={`/projects/${id}.png`}
+        alt={`${locale === 'es' ? 'Captura de la página de' : 'Website screenshot of'} ${project.name}`}
+        loading="lazy"
+        decoding="async"
+        width={1280}
+        height={800}
+      />
+    </a>
   );
 }
-
 export default function Portfolio() {
   const locale = useSyncExternalStore(
     subscribeLocale,

@@ -1,0 +1,61 @@
+name: Refresh website thumbnails
+
+on:
+  schedule:
+    - cron: '23 10 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/refresh-thumbnails.yml'
+      - 'scripts/thumbnails/**'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: website-thumbnails
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: scripts/thumbnails/package-lock.json
+      - run: npm ci --prefix scripts/thumbnails
+      - run: node --test scripts/thumbnails/update.test.mjs
+      - name: Install Chromium
+        working-directory: scripts/thumbnails
+        run: npx playwright install --with-deps chromium
+      - name: Capture public websites
+        id: capture
+        continue-on-error: true
+        run: node scripts/thumbnails/capture.mjs
+      - name: Save changed thumbnails
+        run: |
+          git add public/projects/*.png
+          if git diff --cached --quiet; then
+            echo "No thumbnail changes."
+            exit 0
+          fi
+          # Preserve the project owner's existing author identity for Vercel's
+          # private-project author check; the committer identifies automation.
+          export GIT_AUTHOR_NAME="$(git log -1 --format=%an -- components/portfolio.tsx)"
+          export GIT_AUTHOR_EMAIL="$(git log -1 --format=%ae -- components/portfolio.tsx)"
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'chore: refresh website thumbnails'
+          git pull --rebase origin main
+          git push origin HEAD:main
+      - name: Report capture failures
+        if: steps.capture.outcome == 'failure'
+        run: |
+          echo 'At least one site could not be captured. Its previous image was retained; see capture logs.'
+          exit 1

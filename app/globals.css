@@ -1374,3 +1374,35 @@ h3 {
     bottom: 38px;
   }
 }
+/* Real project screenshots, shown in full without cropping the website. */
+.project-visual.website-preview {
+  display: block;
+  height: auto;
+  min-height: 0;
+  padding: 0;
+  background: #080e19;
+  overflow: hidden;
+  border-radius: 13px;
+}
+.website-preview .preview-top {
+  padding: 12px 14px;
+  margin: 0;
+  background: #101c2e;
+  min-height: 40px;
+}
+.website-thumbnail {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16/10;
+  object-fit: contain;
+  object-position: center;
+  background: #080e19;
+  transition: filter 0.25s;
+}
+.website-preview:hover .website-thumbnail {
+  filter: brightness(1.08);
+}
+.website-preview:focus-visible {
+  outline-offset: -3px;
+}

@@ -1,5 +1,6 @@
 # dependencies
 /node_modules
+/scripts/thumbnails/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
