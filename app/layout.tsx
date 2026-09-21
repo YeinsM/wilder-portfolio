@@ -5,13 +5,13 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'Wilder Mancera — Full Stack Developer',
   description:
-    'Desarrollo full stack, soluciones empresariales y calidad de software. Explora los proyectos de Wilder Mancera.',
+    'Full stack development, enterprise solutions, and software quality. Explore Wilder Mancera’s projects.',
 };
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
+    <html lang="en">
       <body>{children}</body>
     </html>
   );
