@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "wrangler dev --config dist/server/wrangler.json",
-    "lint": "oxlint app components/portfolio.tsx components/hero-scene.tsx components/stack-explorer.tsx lib vite.config.ts next.config.ts vitest.config.ts",
+    "lint": "oxlint app components/portfolio.tsx components/hero-scene.tsx components/stack-explorer.tsx components/immersive-scene.tsx components/experience-timeline.tsx lib vite.config.ts next.config.ts vitest.config.ts",
     "format": "oxfmt",
     "test": "vitest run --config vitest.config.ts",
     "typecheck": "tsc --noEmit"

@@ -8,7 +8,6 @@ import {
   useSyncExternalStore,
 } from 'react';
 import {
-  ArrowDown,
   ArrowUpRight,
   ArrowRight,
   Plus,
@@ -17,6 +16,9 @@ import {
   Copy,
   Check,
   Code2,
+  Database,
+  Server,
+  ShieldCheck,
 } from 'lucide-react';
 import { copy, projects } from '../lib/content';
 import {
@@ -24,8 +26,8 @@ import {
   normalizeLocale,
   type Locale,
 } from '../lib/portfolio-state';
-import StackExplorer from './stack-explorer';
-const HeroScene = lazy(() => import('./hero-scene'));
+import ExperienceTimeline from './experience-timeline';
+const ImmersiveScene = lazy(() => import('./immersive-scene'));
 let memoryLocale: Locale | null = null;
 const localeListeners = new Set<() => void>();
 function readLocale(): Locale {
@@ -140,6 +142,20 @@ export default function Portfolio() {
     document.documentElement.lang = locale;
   }, [locale]);
   useEffect(() => {
+    let cancelled = false;
+    let frame = 0;
+    import('gsap/ScrollTrigger')
+      .then(({ ScrollTrigger }) => {
+        if (cancelled) return;
+        frame = requestAnimationFrame(() => ScrollTrigger.refresh());
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+      cancelAnimationFrame(frame);
+    };
+  }, [locale, openProject]);
+  useEffect(() => {
     if (copied === 'idle') return;
     const timer = setTimeout(() => setCopied('idle'), 3000);
     return () => clearTimeout(timer);
@@ -163,9 +179,16 @@ export default function Portfolio() {
             });
             gsap.utils.toArray<HTMLElement>('.reveal').forEach((element) =>
               gsap.from(element, {
-                y: 28,
-                opacity: 0.25,
-                duration: 0.7,
+                y: 48,
+                opacity: 0,
+                duration: 0.85,
+                delay:
+                  element.matches('.specialty-entry, .project-row') &&
+                  element.parentElement
+                    ? Array.from(element.parentElement.children).indexOf(
+                        element,
+                      ) * 0.12
+                    : 0,
                 ease: 'power2.out',
                 scrollTrigger: {
                   trigger: element,
@@ -197,6 +220,26 @@ export default function Portfolio() {
       observer.disconnect();
     };
   }, []);
+  function tiltCard(event: React.PointerEvent<HTMLElement>) {
+    if (
+      event.pointerType !== 'mouse' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return;
+    const box = event.currentTarget.getBoundingClientRect();
+    event.currentTarget.style.setProperty(
+      '--tilt-x',
+      `${(-(event.clientY - box.top - box.height / 2) / box.height) * 7}deg`,
+    );
+    event.currentTarget.style.setProperty(
+      '--tilt-y',
+      `${((event.clientX - box.left - box.width / 2) / box.width) * 7}deg`,
+    );
+  }
+  function resetTilt(event: React.PointerEvent<HTMLElement>) {
+    event.currentTarget.style.setProperty('--tilt-x', '0deg');
+    event.currentTarget.style.setProperty('--tilt-y', '0deg');
+  }
   function switchLanguage(value: Locale) {
     memoryLocale = value;
     try {
@@ -228,16 +271,21 @@ export default function Portfolio() {
           }
         >
           <a className="wordmark" href="#home" aria-label="Wilder Mancera">
-            wm<span>.</span>
+            <span className="brand-monogram">WM</span>
+            <span className="brand-name">Wilder Mancera</span>
           </a>
           <div className="nav-links">
-            {['projects', 'stack', 'about'].map((id, i) => (
+            {['about', 'experience', 'projects', 'stack'].map((id, i) => (
               <a
                 key={id}
                 className={activeSection === id ? 'current' : ''}
                 href={`#${id}`}
               >
-                {c.nav[i]}
+                {
+                  (locale === 'es'
+                    ? ['Sobre mí', 'Experiencia', 'Proyectos', 'Stack']
+                    : ['About', 'Experience', 'Projects', 'Stack'])[i]
+                }
               </a>
             ))}
           </div>
@@ -274,21 +322,35 @@ export default function Portfolio() {
       </header>
       <main id="main" tabIndex={-1}>
         <section id="home" className="hero">
+          <svg
+            className="hero-contours"
+            viewBox="0 0 1400 900"
+            preserveAspectRatio="xMidYMid slice"
+            aria-hidden="true"
+          >
+            {Array.from({ length: 30 }, (_, i) => (
+              <path
+                key={i}
+                d={`M ${-220 + i * 18} -80 C ${800 + i * 14} ${140 + i * 9}, ${-420 + i * 25} ${480 + i * 7}, ${540 + i * 22} 960 M ${900 + i * 18} -80 C ${1600 - i * 8} 220, ${520 + i * 12} 400, ${1520 + i * 14} 860`}
+              />
+            ))}
+          </svg>
           <div className="hero-copy">
             <p className="eyebrow">
               <span className="status-dot" />
               {c.available}
             </p>
             <h1>
-              Wilder
-              <br />
-              <span>Mancera</span>
-              <em>Full stack developer.</em>
+              {locale === 'es' ? 'Hola, soy' : 'Hi, I’m'} <span>Wilder</span>
             </h1>
             <p className="intro">
-              {c.intro}
+              {locale === 'es'
+                ? 'Construyo experiencias digitales,'
+                : 'I build digital experiences,'}
               <br />
-              {c.intro2}
+              {locale === 'es'
+                ? 'de la interfaz al corazón del sistema.'
+                : 'from the interface to the heart of the system.'}
             </p>
             <div className="hero-buttons">
               <a className="button primary" href="#projects">
@@ -301,23 +363,124 @@ export default function Portfolio() {
               </a>
             </div>
           </div>
-          <Suspense
-            fallback={
-              <div className="hero-visual">
-                <div className="wm-fallback" aria-hidden="true">
-                  WM
-                </div>
-              </div>
-            }
-          >
-            <HeroScene locale={locale} />
-          </Suspense>
+          <div className="desk-stage">
+            <Suspense
+              fallback={
+                <div className="scene-placeholder">WM / FULL STACK</div>
+              }
+            >
+              <ImmersiveScene kind="desk" locale={locale} />
+            </Suspense>
+          </div>
           <div className="hero-bottom">
             <span>{c.signature}</span>
-            <a href="#projects">
-              {c.explore}
-              <ArrowDown size={14} />
+            <a href="#about" className="scroll-cue">
+              <span className="scroll-mouse" aria-hidden="true">
+                <span />
+              </span>
+              <span>{c.explore}</span>
             </a>
+          </div>
+        </section>
+        <section id="about" className="section overview-section">
+          <div className="section-heading reveal">
+            <p className="eyebrow">
+              {locale === 'es' ? 'INTRODUCCIÓN' : 'INTRODUCTION'}
+            </p>
+            <h2>
+              {locale === 'es' ? 'Una visión completa' : 'The whole picture'}
+              <span className="cyan">.</span>
+            </h2>
+            <p className="overview-copy">{c.bio}</p>
+            <p className="overview-copy secondary">{c.bio2}</p>
+          </div>
+          <div className="specialties">
+            {[
+              {
+                icon: Code2,
+                name:
+                  locale === 'es'
+                    ? 'Desarrollo frontend'
+                    : 'Frontend development',
+                stack: 'Angular · React',
+              },
+              {
+                icon: Server,
+                name:
+                  locale === 'es'
+                    ? 'Desarrollo backend'
+                    : 'Backend development',
+                stack: '.NET · Node.js',
+              },
+              {
+                icon: Database,
+                name:
+                  locale === 'es'
+                    ? 'Datos e integraciones'
+                    : 'Data & integrations',
+                stack: 'SQL · NoSQL · Dynamics 365',
+              },
+              {
+                icon: ShieldCheck,
+                name:
+                  locale === 'es' ? 'Calidad y entrega' : 'Quality & delivery',
+                stack: 'QA · CI/CD · DevOps',
+              },
+            ].map(({ icon: Icon, name, stack }, i) => (
+              <div className="specialty-entry reveal" key={name}>
+                <article
+                  className="specialty-card tilt-card"
+                  onPointerMove={tiltCard}
+                  onPointerLeave={resetTilt}
+                >
+                  <span className="specialty-number">0{i + 1}</span>
+                  <div className="specialty-orb">
+                    <Icon size={40} strokeWidth={1.2} />
+                  </div>
+                  <h3>{name}</h3>
+                  <p>{stack}</p>
+                </article>
+              </div>
+            ))}
+          </div>
+        </section>
+        <ExperienceTimeline locale={locale} />
+        <section id="stack" className="section stack-section">
+          <div className="section-heading reveal">
+            <p className="eyebrow">
+              {locale === 'es'
+                ? 'LAS HERRAMIENTAS DETRÁS DE CADA SOLUCIÓN'
+                : 'THE TOOLS BEHIND EVERY SOLUTION'}
+            </p>
+            <h2>
+              {locale === 'es'
+                ? 'Mi universo técnico'
+                : 'My technical universe'}
+              <span className="cyan">.</span>
+            </h2>
+            <p className="section-intro">
+              {locale === 'es'
+                ? 'Frontend, backend y datos. Tecnologías que conecto para convertir ideas en productos.'
+                : 'Frontend, backend, and data. Technologies I connect to turn ideas into products.'}
+            </p>
+          </div>
+          <div className="tech-stage">
+            <Suspense
+              fallback={
+                <div className="scene-placeholder">
+                  .NET · React · Angular · Node.js · SQL · MongoDB
+                </div>
+              }
+            >
+              <ImmersiveScene kind="tech" locale={locale} />
+            </Suspense>
+          </div>
+          <div className="delivery-strip">
+            <span>QA Automation</span>
+            <span>CI/CD</span>
+            <span>DevOps</span>
+            <span>Azure</span>
+            <span>AWS</span>
           </div>
         </section>
         <section id="projects" className="section projects-section">
@@ -338,7 +501,13 @@ export default function Portfolio() {
                 className={`project-row reveal ${openProject === project.id ? 'opened' : ''}`}
                 key={project.id}
               >
-                <ProjectVisual id={project.id} locale={locale} />
+                <div
+                  className="project-tilt tilt-card"
+                  onPointerMove={tiltCard}
+                  onPointerLeave={resetTilt}
+                >
+                  <ProjectVisual id={project.id} locale={locale} />
+                </div>
                 <div className="project-info">
                   <div className="project-meta">
                     <span className="mono">0{i + 1}</span>
@@ -403,122 +572,91 @@ export default function Portfolio() {
             ))}
           </div>
         </section>
-        <section id="stack" className="section stack-section">
-          <div className="section-heading reveal">
-            <div>
-              <p className="eyebrow">{c.stackLabel}</p>
-              <h2>
-                {c.stackTitle}
-                <br />
-                <span>{c.stackTitle2}</span>
-              </h2>
-            </div>
-            <p className="section-intro">{c.stackIntro}</p>
-          </div>
-          <div className="reveal">
-            <StackExplorer locale={locale} />
-          </div>
-        </section>
-        <section id="about" className="section about-section">
-          <div className="about-heading reveal">
-            <p className="eyebrow">{c.aboutLabel}</p>
-            <h2>
-              {c.aboutTitle}
-              <br />
-              <span>{c.aboutTitle2}</span>
-            </h2>
-            <div className="about-signature" aria-hidden="true">
-              W<span> / </span>M<span className="cyan">.</span>
-            </div>
-          </div>
-          <div className="about-body reveal">
-            <p className="bio-lead">{c.bio}</p>
-            <p>{c.bio2}</p>
-            <div className="principles">
-              {c.principles.map(([title, text], i) => (
-                <div key={title}>
-                  <span className="mono">0{i + 1}</span>
-                  <div>
-                    <h3>{title}</h3>
-                    <p>{text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
         <section id="contact" className="section contact-section">
-          <p className="eyebrow reveal">
-            <span className="status-dot" />
-            {c.contactLabel}
-          </p>
-          <h2 className="reveal">
-            {c.contactTitle}
-            <br />
-            <span>{c.contactTitle2}</span>
-          </h2>
-          <p className="contact-intro">{c.contactIntro}</p>
-          <fieldset
-            className="contact-intents"
+          <div className="contact-panel">
+            <p className="eyebrow reveal">
+              <span className="status-dot" />
+              {c.contactLabel}
+            </p>
+            <h2 className="reveal">
+              {c.contactTitle}
+              <br />
+              <span>{c.contactTitle2}</span>
+            </h2>
+            <p className="contact-intro">{c.contactIntro}</p>
+            <fieldset
+              className="contact-intents"
 
-            aria-label={
-              locale === 'es' ? 'Motivo de contacto' : 'Contact reason'
-            }
-          >
-            <button
-              aria-pressed={intent === 'project'}
-              onClick={() => setIntent('project')}
+              aria-label={
+                locale === 'es' ? 'Motivo de contacto' : 'Contact reason'
+              }
             >
-              {c.projectIntent}
-              <ArrowUpRight size={16} />
-            </button>
-            <button
-              aria-pressed={intent === 'opportunity'}
-              onClick={() => setIntent('opportunity')}
-            >
-              {c.jobIntent}
-              <ArrowUpRight size={16} />
-            </button>
-          </fieldset>
-          <div className="email-row">
-            <a href={contactHref(locale, intent)}>
-              yeinsmancera@gmail.com
-              <ArrowUpRight />
-            </a>
-            <button
-              className="copy-button"
-              onClick={copyEmail}
-              aria-label={c.copy}
-            >
-              {copied === 'success' ? <Check /> : <Copy />}
-            </button>
+              <button
+                aria-pressed={intent === 'project'}
+                onClick={() => setIntent('project')}
+              >
+                {c.projectIntent}
+                <ArrowUpRight size={16} />
+              </button>
+              <button
+                aria-pressed={intent === 'opportunity'}
+                onClick={() => setIntent('opportunity')}
+              >
+                {c.jobIntent}
+                <ArrowUpRight size={16} />
+              </button>
+            </fieldset>
+            <div className="email-row">
+              <a href={contactHref(locale, intent)}>
+                yeinsmancera@gmail.com
+                <ArrowUpRight />
+              </a>
+              <button
+                className="copy-button"
+                onClick={copyEmail}
+                aria-label={c.copy}
+              >
+                {copied === 'success' ? <Check /> : <Copy />}
+              </button>
+            </div>
+            <output className="copy-status">
+              {copied === 'success'
+                ? c.copied
+                : copied === 'error'
+                  ? c.copyError
+                  : '\u00a0'}
+            </output>
+            <div className="social-links">
+              <a
+                href="https://www.linkedin.com/in/wilder-mancera/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <BriefcaseBusiness size={17} />
+                LinkedIn
+                <ArrowUpRight size={15} />
+              </a>
+              <a
+                href="https://github.com/YeinsM/YeinsM"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <Code2 size={17} />
+                GitHub
+                <ArrowUpRight size={15} />
+              </a>
+            </div>
           </div>
-          <output className="copy-status">
-            {copied === 'success'
-              ? c.copied
-              : copied === 'error'
-                ? c.copyError
-                : '\u00a0'}
-          </output>
-          <div className="social-links">
-            <a
-              href="https://www.linkedin.com/in/wilder-mancera/"
-              target="_blank"
-              rel="noreferrer"
+          <div className="globe-stage">
+            <Suspense
+              fallback={
+                <div className="scene-placeholder">
+                  {locale === 'es' ? 'Conectemos.' : 'Let’s connect.'}
+                </div>
+              }
             >
-              <BriefcaseBusiness size={17} />
-              LinkedIn
-              <ArrowUpRight size={15} />
-            </a>
-            <a
-              href="https://github.com/YeinsM/YeinsM"
-              target="_blank"
-              rel="noreferrer"
-            >
-              <Code2 size={17} />
-              GitHub
-              <ArrowUpRight size={15} />
-            </a>
+              <ImmersiveScene kind="globe" locale={locale} />
+            </Suspense>
           </div>
         </section>
       </main>

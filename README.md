@@ -1,6 +1,6 @@
 # Wilder Mancera
 
-Bilingual full stack portfolio. Spanish/English, interactive Three.js WM monogram, selectable technology layers, three expandable project contributions, contact intents and clipboard feedback. Original black/navy/cyan design. React + TypeScript + Vite (Sites/Vinext scaffold), GSAP and Three.js. Fonts are bundled locally.
+Bilingual full stack portfolio. Spanish/English, procedural Three.js workstation, eight-object technology gallery, five-role experience timeline and globe, three expandable project contributions, contact intents and clipboard feedback. Original black/navy/cyan design. React + TypeScript + Vite (Sites/Vinext scaffold), GSAP and Three.js. Fonts are bundled locally.
 
 ## Development
 
@@ -12,13 +12,13 @@ Import this repository with its root directory unchanged. The committed `vercel.
 
 ## Content
 
-Edit `lib/content.ts` for bilingual copy and projects. Contact URLs are in `components/portfolio.tsx`; email intent encoding is in `lib/portfolio-state.ts`. No metrics, years of experience or sole-authorship claims were invented. BM Cargo is explicitly a contribution to an existing project. Project visuals are labeled conceptual summaries, not screenshots of production systems.
+Edit `lib/content.ts` for bilingual copy and projects. Contact URLs are in `components/portfolio.tsx`; email intent encoding is in `lib/portfolio-state.ts`. Career dates and metrics in lib/experience.ts were supplied by Wilder. No years of experience or sole-authorship claims were invented. BM Cargo is explicitly a contribution to an existing project. Project visuals are labeled conceptual summaries, not screenshots of production systems.
 
 ## Verification and limits
 
 - State tests cover locale fallback, terminal pipeline transitions and encoded contact intent.
 - Read-only independent review checked content, SSR, cleanup and accessibility. Its control-size and reduced-motion findings were addressed.
-- Browser interaction/visual QA has not been performed. Mobile and reduced-motion behavior are implemented but require device validation before a public launch.
+- Browser review covered the desktop scenes, ES/EN switching, project expansion, contact section and a narrow mobile viewport. Reduced-motion and WebGL fallback are implemented and source-reviewed; real-device coverage remains limited.
 - Lint targets authored application files. Unused generated `components/ui` and `hooks` remain unchanged; the starter's full-tree lint reports findings in those templates.
 - The pinned starter dependency audit reported 11 advisories (8 high, 2 moderate, 1 low), affecting build/dev/server dependencies. They are not shipped as server runtimes in this static deployment. No forced dependency upgrades were applied. Review/update the starter before exposing a development server or adding server functions.
 - Three.js is lazy-loaded; its minified chunk exceeds the build's 500kB warning threshold. GPU resources are released on unmount; offscreen scenes skip rendering and reduced motion renders on demand.
