@@ -12,17 +12,16 @@ it.each<SceneKind>(['desk', 'globe', 'tech'])('%s completes repeated turns witho
   const model = buildScene(THREE, kind);
   model.resize(1000, 650);
   const root = model.scene.children[0];
-  const targets = kind === 'desk' ? [root] : root.children.filter((child) => child instanceof THREE.Group);
+  const targets = kind !== 'tech' ? [root] : root.children.filter((child) => child instanceof THREE.Group);
   expect(targets.length).toBeGreaterThan(0);
   const anchors = model.labelPositions();
-  model.update(0, 0, 0);
   const start = targets.map((target) => target.rotation.y);
-  model.update(64, 0, 0);
+  targets.forEach((_, index) => model.rotate(index, 4 * Math.PI, 2 * Math.PI));
   targets.forEach((target, index) => {
     expect(target.rotation.y - start[index]).toBeGreaterThanOrEqual(2 * Math.PI);
   });
   expect(model.labelPositions()).toEqual(anchors);
-  model.update(0, 0, 0);
-  targets.forEach((target, index) => expect(target.rotation.y).toBe(start[index]));
+  targets.forEach((_, index) => model.rotate(index, -4 * Math.PI, -2 * Math.PI));
+  targets.forEach((target, index) => expect(target.rotation.y).toBeCloseTo(start[index]));
   model.dispose();
 });

@@ -559,22 +559,23 @@ export function buildScene(T: Engine, kind: SceneKind) {
       };
     });
   }
-  function update(time: number, pointerX: number, pointerY: number) {
-    root.rotation.y = pointerX * 0.065;
-    root.rotation.x = pointerY * 0.025;
-    // Accumulate full turns instead of oscillating between two angles.
-    if (kind === 'desk') {
-      root.rotation.y += (time * Math.PI * 2) / 32;
-      animated.forEach((fan) => {
-        fan.rotation.z = time * 0.85;
-      });
-    }
-    if (kind === 'globe') animated[0].rotation.y = 2.4 + (time * Math.PI * 2) / 28;
-    if (kind === 'tech')
-      animated.forEach((object, i) => {
-        object.rotation.y = (time * Math.PI * 2) / (18 + i * 0.6);
-        object.rotation.x = Math.sin(time * 0.35 + i) * 0.06;
-      });
+  const draggable = kind === 'tech' ? animated : [root];
+  const raycaster = new T.Raycaster();
+  function pick(x: number, y: number) {
+    scene.updateMatrixWorld(true);
+    camera.updateMatrixWorld();
+    raycaster.setFromCamera(new T.Vector2(x, y), camera);
+    const hit = raycaster.intersectObjects(draggable, true)[0];
+    if (!hit) return -1;
+    let object = hit.object;
+    while (object.parent && !draggable.includes(object)) object = object.parent;
+    return draggable.indexOf(object);
+  }
+  function rotate(index: number, deltaX: number, deltaY: number) {
+    const object = draggable[index];
+    if (!object) return;
+    object.rotation.y += deltaX;
+    object.rotation.x += deltaY;
   }
   function dispose() {
     const geometries = new Set<Three.BufferGeometry>();
@@ -592,5 +593,5 @@ export function buildScene(T: Engine, kind: SceneKind) {
     materials.forEach((material) => material.dispose());
     textures.forEach((map) => map.dispose());
   }
-  return { scene, camera, resize, update, labelPositions, dispose };
+  return { scene, camera, resize, pick, rotate, labelPositions, dispose };
 }

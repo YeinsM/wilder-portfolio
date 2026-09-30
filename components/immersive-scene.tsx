@@ -37,16 +37,9 @@ export default function ImmersiveScene({
     let teardown: (() => void) | undefined;
     let draw: (() => void) | undefined;
     setStatus('loading');
-    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const finePointer = window.matchMedia('(pointer: fine)');
-    let px = 0;
-    let py = 0;
-    let elapsed = 0;
-    let lastTime = 0;
     const stop = () => {
       cancelAnimationFrame(frame);
       frame = 0;
-      lastTime = 0;
     };
     const active = () => visible && !document.hidden && !disposed;
     const resume = () => {
@@ -55,10 +48,6 @@ export default function ImmersiveScene({
     const visibility = () => {
       if (active()) resume();
       else stop();
-    };
-    const preference = () => {
-      stop();
-      resume();
     };
     async function initialize() {
       if (started || disposed) return;
@@ -85,7 +74,7 @@ export default function ImmersiveScene({
         renderer.toneMappingExposure = 1.1;
         built = builders.buildScene(T, kind);
         const canvas = renderer.domElement;
-        canvas.style.cssText = 'display:block;width:100%;height:100%;';
+        canvas.style.cssText = 'display:block;width:100%;height:100%;cursor:grab;touch-action:pan-y;';
         canvas.setAttribute('aria-hidden', 'true');
         element.insertBefore(canvas, element.firstChild);
         const localRenderer = renderer;
@@ -114,17 +103,40 @@ export default function ImmersiveScene({
           });
           resume();
         };
+        let pointer: number | null = null;
+        let selected = -1;
+        let lastX = 0;
+        let lastY = 0;
+        const down = (event: PointerEvent) => {
+          if (event.button !== 0 || pointer !== null || contextFailed) return;
+          const bounds = canvas.getBoundingClientRect();
+          selected = localScene.pick(
+            ((event.clientX - bounds.left) / bounds.width) * 2 - 1,
+            1 - ((event.clientY - bounds.top) / bounds.height) * 2,
+          );
+          if (selected < 0) return;
+          pointer = event.pointerId;
+          lastX = event.clientX;
+          lastY = event.clientY;
+          canvas.setPointerCapture(pointer);
+          canvas.style.cursor = 'grabbing';
+        };
         const move = (event: PointerEvent) => {
-          if (!finePointer.matches || motion.matches) return;
-          const bounds = element.getBoundingClientRect();
-          px = ((event.clientX - bounds.left) / bounds.width) * 2 - 1;
-          py = ((event.clientY - bounds.top) / bounds.height) * 2 - 1;
+          if (event.pointerId !== pointer) return;
+          const scale = (Math.PI * 2) / Math.max(canvas.clientWidth, 300);
+          localScene.rotate(selected, (event.clientX - lastX) * scale,
+            (event.clientY - lastY) * scale);
+          lastX = event.clientX;
+          lastY = event.clientY;
           resume();
         };
-        const leave = () => {
-          px = 0;
-          py = 0;
-          resume();
+        const release = (event: PointerEvent) => {
+          if (event.pointerId !== pointer) return;
+          pointer = null;
+          selected = -1;
+          canvas.style.cursor = 'grab';
+          if (canvas.hasPointerCapture(event.pointerId))
+            canvas.releasePointerCapture(event.pointerId);
         };
         const contextLost = (event: Event) => {
           event.preventDefault();
@@ -139,27 +151,23 @@ export default function ImmersiveScene({
         draw = () => {
           frame = 0;
           if (!active()) return;
-          const now = performance.now();
-          if (!motion.matches && lastTime)
-            elapsed += Math.min((now - lastTime) / 1000, 0.05);
-          lastTime = now;
-          localScene.update(
-            motion.matches ? 0 : elapsed,
-            motion.matches ? 0 : px,
-            motion.matches ? 0 : py,
-          );
           localRenderer.render(localScene.scene, localScene.camera);
-          if (!motion.matches) frame = requestAnimationFrame(draw!);
         };
         const resizeObserver = new ResizeObserver(resize);
         resizeObserver.observe(element);
-        element.addEventListener('pointermove', move);
-        element.addEventListener('pointerleave', leave);
+        canvas.addEventListener('pointerdown', down);
+        canvas.addEventListener('pointermove', move);
+        canvas.addEventListener('pointerup', release);
+        canvas.addEventListener('pointercancel', release);
+        canvas.addEventListener('lostpointercapture', release);
         canvas.addEventListener('webglcontextlost', contextLost);
         teardown = () => {
           resizeObserver.disconnect();
-          element.removeEventListener('pointermove', move);
-          element.removeEventListener('pointerleave', leave);
+          canvas.removeEventListener('pointerdown', down);
+          canvas.removeEventListener('pointermove', move);
+          canvas.removeEventListener('pointerup', release);
+          canvas.removeEventListener('pointercancel', release);
+          canvas.removeEventListener('lostpointercapture', release);
           canvas.removeEventListener('webglcontextlost', contextLost);
           localScene.dispose();
           localRenderer.dispose();
@@ -194,14 +202,12 @@ export default function ImmersiveScene({
     });
     observer.observe(element);
     document.addEventListener('visibilitychange', visibility);
-    motion.addEventListener('change', preference);
     return () => {
       disposed = true;
       stop();
       preload.disconnect();
       observer.disconnect();
       document.removeEventListener('visibilitychange', visibility);
-      motion.removeEventListener('change', preference);
       teardown?.();
     };
   }, [kind]);
@@ -213,6 +219,7 @@ export default function ImmersiveScene({
       data-scene-status={status}
       role={kind === 'tech' ? 'group' : 'img'}
       aria-label={label}
+      title={locale === 'es' ? 'Haz clic y arrastra para girar' : 'Click and drag to rotate'}
       style={{ width: '100%', height: '100%', position: 'relative' }}
     >
       {status !== 'ready' && (
