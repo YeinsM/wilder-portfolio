@@ -6,13 +6,17 @@ Bilingual full stack portfolio. Spanish/English, procedural Three.js workstation
 
 Run `npm ci`, then `npm run dev`. Check `npm test`, `npm run typecheck`, `npm run lint`, and `npm run build`. Public static output is `dist/client`. No backend, database or server functions are required.
 
+## Continuous integration
+
+The `Portfolio CI` GitHub Actions workflow validates pushes and pull requests targeting `main`. It installs dependencies with the locked package graph, runs TypeScript type checking, Vitest tests, authored-source linting, the production build, and the thumbnail automation tests. Concurrent runs for the same ref are cancelled so stale validation does not consume unnecessary runner time.
+
 ## Vercel deployment
 
 Import this repository with its root directory unchanged. The committed `vercel.json` selects the Other framework preset, runs `npm ci` and `npm run build`, and publishes `dist/client`. This project uses Vinext static export; it must not use the Next.js preset or publish the repository root or `dist` directory. Pushes to the connected production branch trigger a new deployment. Sites can also publish the same static output through its existing manifest.
 
 ## Content
 
-Edit `lib/content.ts` for bilingual copy and projects. Contact URLs are in `components/portfolio.tsx`; email intent encoding is in `lib/portfolio-state.ts`. Career dates and metrics in lib/experience.ts were supplied by Wilder. No years of experience or sole-authorship claims were invented. BM Cargo is explicitly a contribution to an existing project. Project cards use real screenshots of the public websites, stored in public/projects. These snapshots are updated manually when the websites change.
+Edit `lib/content.ts` for bilingual copy and projects. Contact URLs are in `components/portfolio.tsx`; email intent encoding is in `lib/portfolio-state.ts`. Career dates and metrics in lib/experience.ts were supplied by Wilder. No years of experience or sole-authorship claims were invented. BM Cargo is explicitly a contribution to an existing project. Project cards use real screenshots of the public websites, stored in `public/projects`, and those snapshots are refreshed automatically by GitHub Actions.
 
 ## Verification and limits
 
