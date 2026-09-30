@@ -512,6 +512,10 @@ export function buildScene(T: Engine, kind: SceneKind) {
       );
       symbol.position.z = 0.9;
       group.add(symbol);
+      const backSymbol = symbol.clone();
+      backSymbol.position.z = -0.9;
+      backSymbol.rotation.y = Math.PI;
+      group.add(backSymbol);
       group.userData.name = name;
     });
     camera.position.set(0, 0, 10);
@@ -558,14 +562,17 @@ export function buildScene(T: Engine, kind: SceneKind) {
   function update(time: number, pointerX: number, pointerY: number) {
     root.rotation.y = pointerX * 0.065;
     root.rotation.x = pointerY * 0.025;
-    if (kind === 'desk')
+    // Accumulate full turns instead of oscillating between two angles.
+    if (kind === 'desk') {
+      root.rotation.y += (time * Math.PI * 2) / 32;
       animated.forEach((fan) => {
         fan.rotation.z = time * 0.85;
       });
-    if (kind === 'globe') animated[0].rotation.y = 2.4 + time * 0.035;
+    }
+    if (kind === 'globe') animated[0].rotation.y = 2.4 + (time * Math.PI * 2) / 28;
     if (kind === 'tech')
       animated.forEach((object, i) => {
-        object.rotation.y = Math.sin(time * 0.45 + i) * 0.13;
+        object.rotation.y = (time * Math.PI * 2) / (18 + i * 0.6);
         object.rotation.x = Math.sin(time * 0.35 + i) * 0.06;
       });
   }
