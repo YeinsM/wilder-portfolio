@@ -577,6 +577,15 @@ export function buildScene(T: Engine, kind: SceneKind) {
     object.rotation.y += deltaX;
     object.rotation.x += deltaY;
   }
+  function advance(deltaSeconds: number) {
+    draggable.forEach((object, index) => {
+      const secondsPerTurn = kind === 'desk' ? 32 : kind === 'globe' ? 28 : 18 + index * 0.6;
+      object.rotation.y += (deltaSeconds * Math.PI * 2) / secondsPerTurn;
+    });
+    if (kind === 'desk') animated.forEach((fan) => {
+      fan.rotation.z += deltaSeconds * 0.85;
+    });
+  }
   function dispose() {
     const geometries = new Set<Three.BufferGeometry>();
     const materials = new Set<Three.Material>([dark, blue, glow]);
@@ -593,5 +602,5 @@ export function buildScene(T: Engine, kind: SceneKind) {
     materials.forEach((material) => material.dispose());
     textures.forEach((map) => map.dispose());
   }
-  return { scene, camera, resize, pick, rotate, labelPositions, dispose };
+  return { scene, camera, resize, pick, rotate, advance, labelPositions, dispose };
 }

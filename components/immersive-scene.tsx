@@ -37,7 +37,10 @@ export default function ImmersiveScene({
     let teardown: (() => void) | undefined;
     let draw: (() => void) | undefined;
     setStatus('loading');
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let lastTime = 0;
     const stop = () => {
+      lastTime = 0;
       cancelAnimationFrame(frame);
       frame = 0;
     };
@@ -48,6 +51,10 @@ export default function ImmersiveScene({
     const visibility = () => {
       if (active()) resume();
       else stop();
+    };
+    const preference = () => {
+      stop();
+      resume();
     };
     async function initialize() {
       if (started || disposed) return;
@@ -151,7 +158,12 @@ export default function ImmersiveScene({
         draw = () => {
           frame = 0;
           if (!active()) return;
+          const now = performance.now();
+          if (!motion.matches && lastTime)
+            localScene.advance(Math.min((now - lastTime) / 1000, 0.05));
+          lastTime = now;
           localRenderer.render(localScene.scene, localScene.camera);
+          if (!motion.matches) frame = requestAnimationFrame(draw!);
         };
         const resizeObserver = new ResizeObserver(resize);
         resizeObserver.observe(element);
@@ -202,12 +214,14 @@ export default function ImmersiveScene({
     });
     observer.observe(element);
     document.addEventListener('visibilitychange', visibility);
+    motion.addEventListener('change', preference);
     return () => {
       disposed = true;
       stop();
       preload.disconnect();
       observer.disconnect();
       document.removeEventListener('visibilitychange', visibility);
+      motion.removeEventListener('change', preference);
       teardown?.();
     };
   }, [kind]);
